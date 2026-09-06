@@ -14,23 +14,9 @@ const INPUT_KEYS = [
 ];
 
 function hasRequiredCapability(capabilityContext) {
-  const capabilities = capabilityContext ?? {};
-
-  const available = Array.isArray(capabilities)
-    ? capabilities
-    : Array.isArray(capabilities.capabilities)
-      ? capabilities.capabilities
-      : [];
-
-  return available.some((capability) => {
-    const id = capability?.id;
-    const version = capability?.version;
-
-    return (
-      id === REQUIRED_CAPABILITY_ID &&
-      Number(version) >= REQUIRED_CAPABILITY_VERSION
-    );
-  });
+  return Boolean(
+    capabilityContext?.[REQUIRED_CAPABILITY_ID],
+  );
 }
 
 function hasOwn(obj, key) {
