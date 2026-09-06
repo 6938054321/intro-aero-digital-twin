@@ -261,29 +261,37 @@ export const feature = {
       hasRequiredCapability(capabilityContext);
 
     if (!requiredCapabilityAvailable) {
-      return {
-        results: [
-          {
-            id: "capabilityStatus",
-            label: "Required capability",
-            value: "not available",
-            unit: "",
-            precision: 0,
-            emphasis: true,
-          },
-        ],
-        verificationCases: [],
-        decision: {
-          question:
-            "At the selected angle of attack, is the simplified pitching-moment model trimmed, and does a small angle-of-attack disturbance create a restoring moment tendency?",
-          interpretation:
-            "The Stage 4 analysis is locked until the required loads.pitch.component-sum capability, version 1 or later, is available.",
-          status: "caution",
-        },
-        plots: [],
-        scene: null,
-      };
-    }
+  return {
+    results: [
+      {
+        id: "capabilityStatus",
+        label: "Required capability",
+        value: "not available",
+        unit: "",
+        precision: 0,
+        emphasis: true,
+      },
+    ],
+    verificationCases: [
+      {
+        id: "required-capability",
+        title: "Required capability availability",
+        expected:
+          "Stage 4 remains locked when loads.pitch.component-sum version 1 is unavailable.",
+        passed: requiredCapabilityAvailable === false,
+      },
+    ],
+    decision: {
+      question:
+        "At the selected angle of attack, is the simplified pitching-moment model trimmed, and does a small angle-of-attack disturbance create a restoring moment tendency?",
+      interpretation:
+        "The Stage 4 analysis is locked until the required loads.pitch.component-sum capability, version 1 or later, is available.",
+      status: "caution",
+    },
+    plots: [],
+    scene: null,
+  };
+}
 
     const analysis = analyzeTrimResponse(aircraft);
 

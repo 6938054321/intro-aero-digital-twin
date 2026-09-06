@@ -33,34 +33,92 @@ const stage4Fixture = {
 };
 
 describe("Stage 4 activation boundary", () => {
-  it("keeps every downstream stage runtime-locked while Stage 4 is absent", () => {
-    expect(featureEntries.some(({ feature }) => feature.id === "trim-response")).toBe(false);
-    const registry = createCapabilityRegistry(featureEntries);
-    const stability = buildCurriculum(featureEntries, registry).find(({ id }) => id === "stability");
-    expect(stability.modules.filter(({ feature }) => downstreamIds.includes(feature.id)).every(({ runtimeReady }) => !runtimeReady)).toBe(true);
+  it("keeps every downstream stage runtime-locked when the Stage 4 capability is unavailable", () => {
+    const entriesWithoutStage4 = featureEntries.filter(
+      ({ feature }) => feature.id !== "trim-response",
+    );
+
+    const registry = createCapabilityRegistry(entriesWithoutStage4);
+    const stability = buildCurriculum(
+      entriesWithoutStage4,
+      registry,
+    ).find(({ id }) => id === "stability");
+
+    expect(
+      stability.modules
+        .filter(({ feature }) => downstreamIds.includes(feature.id))
+        .every(({ runtimeReady }) => !runtimeReady),
+    ).toBe(true);
+
     downstreamIds.forEach((id) => {
-      const entry = featureEntries.find(({ feature }) => feature.id === id);
-      expect(resolveFeatureAnalysis(entry.feature, initialAircraft).results[0].label).toBe("Analysis unavailable");
+      const entry = entriesWithoutStage4.find(
+        ({ feature }) => feature.id === id,
+      );
+
+      const analysis = resolveFeatureAnalysis(
+        entry.feature,
+        initialAircraft,
+      );
+
+      expect(analysis.results[0].label).toBe("Analysis unavailable");
     });
   });
 
   it("activates and evaluates every downstream stage when the Stage 4 capability is installed", () => {
-    const entries = [...featureEntries, stage4Fixture];
-    const registry = createCapabilityRegistry(entries);
+    const registry = createCapabilityRegistry(featureEntries);
+
     expect(registry.issues).toEqual([]);
-    const stability = buildCurriculum(entries, registry).find(({ id }) => id === "stability");
-    expect(stability.modules.filter(({ feature }) => downstreamIds.includes(feature.id)).every(({ runtimeReady }) => runtimeReady)).toBe(true);
+
+    const stability = buildCurriculum(
+      featureEntries,
+      registry,
+    ).find(({ id }) => id === "stability");
+
+    expect(
+      stability.modules
+        .filter(({ feature }) => downstreamIds.includes(feature.id))
+        .every(({ runtimeReady }) => runtimeReady),
+    ).toBe(true);
+
     downstreamIds.forEach((id) => {
       const models = modelsForFeature(id, registry);
       const context = capabilityContext(models, initialAircraft);
-      const entry = entries.find(({ feature }) => feature.id === id);
-      const analysis = resolveFeatureAnalysis(entry.feature, initialAircraft, context);
+      const entry = featureEntries.find(
+        ({ feature }) => feature.id === id,
+      );
+
+      const analysis = resolveFeatureAnalysis(
+        entry.feature,
+        initialAircraft,
+        context,
+      );
+
       expect(analysis.results[0].label).not.toBe("Analysis unavailable");
-      expect(analysis.verificationCases.every(({ passed }) => passed)).toBe(true);
+      expect(
+        analysis.verificationCases.every(({ passed }) => passed),
+      ).toBe(true);
     });
-    const pitchEntries = modelsForFeature("pitch-dynamic-response", registry);
-    const pitchRun = runSimulation({ entries: pitchEntries, aircraft: initialAircraft, scenario: { durationS: 0.4, initialState: { pitchRad: 0, pitchRateRadS: 0 } } });
+
+    const pitchEntries = modelsForFeature(
+      "pitch-dynamic-response",
+      registry,
+    );
+
+    const pitchRun = runSimulation({
+      entries: pitchEntries,
+      aircraft: initialAircraft,
+      scenario: {
+        durationS: 0.4,
+        initialState: {
+          pitchRad: 0,
+          pitchRateRadS: 0,
+        },
+      },
+    });
+
     expect(pitchRun.status).toBe("complete");
-    expect(Object.values(pitchRun.state).every(Number.isFinite)).toBe(true);
+    expect(
+      Object.values(pitchRun.state).every(Number.isFinite),
+    ).toBe(true);
   });
 });
